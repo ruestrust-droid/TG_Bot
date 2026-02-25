@@ -1,0 +1,49 @@
+import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+TOKEN = 'YOUR_BOT_TOKEN_HERE'
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    await update.message.reply_text(
+        f'Привет, {user.first_name}! 👋\n'
+        f'Я эхо-бот. Напиши мне что-нибудь, и я повторю!'
+    )
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        'Я умею:\n'
+        '/start - приветствие\n'
+        '/help - список команд\n'
+        'Также я повторяю любой текст'
+    )
+
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_message = update.message.text
+    await update.message.reply_text(f'Ты написал: "{user_message}"')
+
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.warning(f'Update {update} caused error {context.error}')
+
+def main():
+    application = Application.builder().token(TOKEN).build()
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    application.add_error_handler(error_handler)
+
+    print("Бот запущен...")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+if __name__ == '__main__':
+    main()
